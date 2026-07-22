@@ -4,7 +4,7 @@ import numpy as np
 import requests
 import os
 import matplotlib.pyplot as plt
-from typing import Dict, Any
+from typing import Dict, Any, List
 
 # Backend URL from environment variable, default to localhost
 BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
@@ -33,9 +33,10 @@ ORIGINAL_CATEGORIES = [
     'shopping_net', 'shopping_pos', 'travel'
 ]
 
-# Custom CSS for professional styling (same as before)
+# Custom CSS for professional styling
 st.markdown("""
 <style>
+    /* Main styling */
     .main-header {
         font-size: 2.5rem;
         font-weight: 700;
@@ -55,13 +56,17 @@ st.markdown("""
         text-align: center;
         margin: 1.5rem 0;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        border-width: 2px;
+        border-style: solid;
     }
     .fraud-result {
-        background-color: #fee2e2;
+        background-color: #fef2f2;
+        border-color: #fecaca;
         border-left: 4px solid #ef4444;
     }
     .legit-result {
-        background-color: #dcfce7;
+        background-color: #f0fdf4;
+        border-color: #bbf7d0;
         border-left: 4px solid #22c55e;
     }
     .result-title {
@@ -70,7 +75,7 @@ st.markdown("""
         margin-bottom: 0.5rem;
     }
     .result-probability {
-        font-size: 2rem;
+        font-size: 2.2rem;
         font-weight: 700;
         margin: 0.5rem 0;
     }
@@ -78,6 +83,11 @@ st.markdown("""
         width: 100%;
         border-radius: 0.375rem;
         font-weight: 600;
+        transition: all 0.2s;
+    }
+    .stButton>button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
     .preset-button {
         margin: 0.5rem 0;
@@ -90,8 +100,24 @@ st.markdown("""
         padding-top: 1.5rem;
         border-top: 1px solid #e5e7eb;
     }
-    .tab-content {
-        padding: 1rem 0;
+    .section-header {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 1rem;
+        padding-top: 1rem;
+    }
+    .feature-importance-bar {
+        background-color: #f3f4f6;
+        border-radius: 0.375rem;
+        padding: 1rem;
+        margin-top: 1.5rem;
+    }
+    .feature-importance-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 1rem;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -136,13 +162,13 @@ st.markdown("### 🚀 Quick Test Examples")
 col1, col2, col3 = st.columns([1, 1, 2])
 
 with col1:
-    if st.button("💳 Normal Transaction", key="normal", help="Fill form with typical legitimate transaction values"):
+    if st.button("💳 Normal Transaction", key="normal", help="Fill form with typical legitimate transaction values", use_container_width=True):
         # Store preset values in session state
         st.session_state.preset = "normal"
         st.rerun()
 
 with col2:
-    if st.button("⚠️ Suspicious Transaction", key="suspicious", help="Fill form with potentially fraudulent transaction values"):
+    if st.button("⚠️ Suspicious Transaction", key="suspicious", help="Fill form with potentially fraudulent transaction values", use_container_width=True):
         st.session_state.preset = "suspicious"
         st.rerun()
 
@@ -191,20 +217,24 @@ if 'preset' in st.session_state:
 st.markdown("### 📝 Transaction Details")
 tab1, tab2, tab3 = st.tabs(["💰 Transaction Info", "📍 Location & Merchant", "👤 Cardholder Info"])
 
+# Initialize form values with preset values or defaults
+def get_value(key, default):
+    return st.session_state.preset_values.get(key, default)
+
 with tab1:
     col1, col2 = st.columns(2)
     with col1:
         amt = st.number_input(
             "Transaction Amount ($)",
             min_value=0.0,
-            value=st.session_state.preset_values.get('amt', 100.0),
+            value=get_value('amt', 100.0),
             step=0.01,
             key="amt"
         )
         category = st.selectbox(
             "Transaction Category",
             options=ORIGINAL_CATEGORIES,
-            index=ORIGINAL_CATEGORIES.index(st.session_state.preset_values.get('category', 'entertainment')),
+            index=ORIGINAL_CATEGORIES.index(get_value('category', 'entertainment')),
             key="category"
         )
     with col2:
@@ -212,14 +242,14 @@ with tab1:
             "Gender",
             options=["Male", "Female"],
             horizontal=True,
-            index=0 if st.session_state.preset_values.get('gender', 'Male') == "Male" else 1,
+            index=0 if get_value('gender', 'Male') == "Male" else 1,
             key="gender"
         )
         hours = st.slider(
             "Hour of Transaction (0-23)",
             min_value=0,
             max_value=23,
-            value=st.session_state.preset_values.get('hours', 12),
+            value=get_value('hours', 12),
             key="hours"
         )
 
@@ -229,7 +259,7 @@ with tab2:
         city_pop = st.number_input(
             "City Population",
             min_value=0,
-            value=st.session_state.preset_values.get('city_pop', 50000),
+            value=get_value('city_pop', 50000),
             step=1000,
             key="city_pop"
         )
@@ -237,7 +267,7 @@ with tab2:
             "Merchant Frequency (1-5000)",
             min_value=1,
             max_value=5000,
-            value=st.session_state.preset_values.get('merchant_freq', 100),
+            value=get_value('merchant_freq', 100),
             help="How commonly this merchant appears in training data",
             key="merchant_freq"
         )
@@ -245,7 +275,7 @@ with tab2:
         distance_km = st.number_input(
             "Distance from Home (km)",
             min_value=0.0,
-            value=st.session_state.preset_values.get('distance_km', 5.0),
+            value=get_value('distance_km', 5.0),
             step=0.1,
             key="distance_km"
         )
@@ -253,7 +283,7 @@ with tab2:
             "City Frequency (1-5000)",
             min_value=1,
             max_value=5000,
-            value=st.session_state.preset_values.get('city_freq', 100),
+            value=get_value('city_freq', 100),
             help="How commonly this city appears in training data",
             key="city_freq"
         )
@@ -264,7 +294,7 @@ with tab3:
         month = st.selectbox(
             "Month",
             options=list(range(1, 13)),
-            index=st.session_state.preset_values.get('month', 1)-1,
+            index=get_value('month', 1)-1,
             format_func=lambda x: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][x-1],
             key="month"
         )
@@ -272,14 +302,14 @@ with tab3:
             "Age",
             min_value=18,
             max_value=100,
-            value=st.session_state.preset_values.get('age', 35),
+            value=get_value('age', 35),
             key="age"
         )
     with col2:
         day_of_week = st.selectbox(
             "Day of Week",
             options=list(range(0, 7)),
-            index=st.session_state.preset_values.get('day_of_week', 0),
+            index=get_value('day_of_week', 0),
             format_func=lambda x: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][x],
             key="day_of_week"
         )
@@ -287,7 +317,7 @@ with tab3:
             "Job Title Frequency (1-5000)",
             min_value=1,
             max_value=5000,
-            value=st.session_state.preset_values.get('job_freq', 100),
+            value=get_value('job_freq', 100),
             help="How commonly this job title appears in training data",
             key="job_freq"
         )
@@ -295,7 +325,7 @@ with tab3:
             "State Frequency (1-5000)",
             min_value=1,
             max_value=5000,
-            value=st.session_state.preset_values.get('state_freq', 100),
+            value=get_value('state_freq', 100),
             help="How commonly this state appears in training data",
             key="state_freq"
         )
@@ -351,86 +381,52 @@ if submitted:
         fraud_prob = result["fraud_probability"] * 100  # Convert to percentage
         risk_level = result["risk_level"]
 
+        # Determine result card styling
         if is_fraud:
-            st.markdown(f"""
-            <div class="result-card fraud-result">
-                <div class="result-title">🚨 Fraudulent Transaction Detected</div>
-                <div class="result-probability">{fraud_prob:.2f}%</div>
-                <div>Risk Level: {risk_level}</div>
-            </div>
-            """, unsafe_allow_html=True)
+            result_card_class = "fraud-result"
+            result_title = "🚨 Fraudulent Transaction Detected"
+            result_color = "#ef4444"
         else:
-            st.markdown(f"""
-            <div class="result-card legit-result">
-                <div class="result-title">✅ Legitimate Transaction</div>
-                <div class="result-probability">{fraud_prob:.2f}%</div>
-                <div>Risk Level: {risk_level}</div>
-            </div>
-            """, unsafe_allow_html=True)
+            result_card_class = "legit-result"
+            result_title = "✅ Legitimate Transaction"
+            result_color = "#22c55e"
+
+        # Display result card
+        st.markdown(f"""
+        <div class="result-card {result_card_class}">
+            <div class="result-title">{result_title}</div>
+            <div class="result-probability">{fraud_prob:.2f}%</div>
+            <div>Risk Level: {risk_level}</div>
+        </div>
+        """, unsafe_allow_html=True)
 
         # Show probability progress bar
         st.progress(int(fraud_prob))
+        st.caption(f"Fraud Probability: {fraud_prob:.2f}%")
 
-        # Note: We cannot compute feature importance from the API response unless we include it.
-        # Since the task said not to change the model logic, and we are only calling the API,
-        # we cannot show feature importance without modifying the backend to return it.
-        # However, the user's original request for the improved UI included feature importance.
-        # We have to improve the app.py with feature importance.
-        # But in the two-service architecture, we would need to modify the backend to return feature importances or SHAP values.
-        # Since the user said "Do not change the underlying model logic", we cannot compute feature importances in the frontend without the model.
-        # Therefore, we will skip the feature importance section in this version, or we can note that it's not available in the API.
-        # Alternatively, we can ask the backend to return the top features if we change the backend, but the user said not to change the model logic.
-        # Let's read the user's request again:
-        #   "EXPLAINABILITY TOUCH
-        #    - After showing the prediction, display the top 3-5 feature importances
-        #      from the model as a simple horizontal bar chart, so users see WHY the model
-        #      made that decision, not just the raw output"
-        #
-        # To do this, we would need to modify the backend to return feature importances.
-        # However, the user said in the two-service architecture section:
-        #   "Do not change the underlying model logic, feature order, or scaling — only
-        #    improve the visual design, layout, and interactivity of the existing app.py."
-        #
-        # But that was for the previous request (the visual design improvement).
-        # For the two-service architecture, the user did not repeat that constraint.
-        # However, they did say: "Build this structure: ... backend/main.py: ...
-        #   Internally: convert the validated Pydantic request into the correct 24-column
-        #   DataFrame (handle one-hot encoding for category, scale the correct columns),
-        #   run model.predict_proba(), return the response"
-        #
-        # They did not ask to return feature importances.
-        #
-        # Given the ambiguity, I will omit the feature importance section in this version
-        # and note that it would require backend changes to support.
-        #
-        # If we want to include it, we would need to change the backend to return more
-        # information (like feature importances or SHAP values). But since the user said
-        # "Do not change the underlying model logic", we can still compute feature
-        # importances in the backend if we have the model (we do) and return them in the
-        # response without changing the model itself.
-        #
-        # Let's adjust: we will modify the backend to return feature importances as well.
-        # But note: the user's instruction for the backend/main.py did not forbid returning
-        # extra information. It only specified the response model.
-        #
-        # However, the user also defined a TransactionResponse model that only has
-        # is_fraud, fraud_probability, and risk_level.
-        #
-        # Therefore, to stay true to the user's request, we will not include feature
-        # importance in the response. We will skip this part in the frontend.
-        #
-        # If the user wants feature importance, they would need to update the
-        # TransactionResponse model and the backend to include it.
-        #
-        # For now, we will leave a placeholder comment.
+        # Display feature importances if available
+        if "feature_importances" in result and result["feature_importances"]:
+            st.markdown('<div class="feature-importance-bar">', unsafe_allow_html=True)
+            st.markdown('<div class="feature-importance-title">🔍 Top Factors Influencing Decision</div>', unsafe_allow_html=True)
 
-        # Feature importance explanation (if we had it from the backend)
-        # Since we don't have it in the current API response, we skip this section.
-        # Uncomment and modify if the backend is updated to return feature importances.
-        #
-        # if "feature_importances" in result:
-        #     st.markdown("### 🔍 Why this decision? Top Contributing Factors")
-        #     # ... code to display feature importances ...
+            # Prepare data for horizontal bar chart
+            features = [item["feature"] for item in result["feature_importances"]]
+            importances = [item["importance"] for item in result["feature_importances"]]
+
+            # Create horizontal bar chart
+            fig, ax = plt.subplots(figsize=(10, 4))
+            y_pos = np.arange(len(features))
+            ax.barh(y_pos, importances, color='#3b82f6')
+            ax.set_yticks(y_pos)
+            ax.set_yticklabels(features)
+            ax.invert_yaxis()  # Labels read top-to-bottom
+            ax.set_xlabel('Feature Importance')
+            ax.set_title('Top 5 Features by Importance')
+            plt.tight_layout()
+
+            # Display the plot
+            st.pyplot(fig)
+            st.markdown('</div>', unsafe_allow_html=True)
 
 # Footer
 st.markdown("""

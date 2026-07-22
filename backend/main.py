@@ -105,10 +105,24 @@ def predict_fraud(transaction: TransactionRequest):
         else:
             risk_level = "High"
 
+        # Get feature importances if available
+        feature_importances = None
+        if hasattr(model, 'feature_importances_'):
+            importances = model.feature_importances_
+            # Create list of (feature, importance)
+            feature_importance_pairs = list(zip(FEATURE_ORDER, importances))
+            # Sort by importance descending
+            feature_importance_pairs.sort(key=lambda x: x[1], reverse=True)
+            # Take top 5
+            top_5 = feature_importance_pairs[:5]
+            # Format as list of dicts: [{"feature": "amt", "importance": 0.1}, ...]
+            feature_importances = [{"feature": feat, "importance": float(imp)} for feat, imp in top_5]
+
         return TransactionResponse(
             is_fraud=is_fraud,
             fraud_probability=fraud_prob,
-            risk_level=risk_level
+            risk_level=risk_level,
+            feature_importances=feature_importances
         )
 
     except KeyError as e:
@@ -118,3 +132,10 @@ def predict_fraud(transaction: TransactionRequest):
     except Exception as e:
         # Log the error for debugging (in production, use proper logging)
         raise HTTPException(status_code=500, detail=f"Prediction error: {str(e)}")
+
+
+if __name__ == "__main__":
+    import uvicorn
+    import os
+    port = int(os.getenv("PORT", 8000))
+    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=False)

@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Literal, List
+from typing import Literal, List, Optional, Dict
 
 class TransactionRequest(BaseModel):
     amt: float = Field(..., ge=0, description="Transaction amount in USD")
@@ -43,3 +43,4 @@ class TransactionResponse(BaseModel):
     is_fraud: bool
     fraud_probability: float = Field(..., ge=0, le=1)
     risk_level: Literal["Low", "Medium", "High"]
+    feature_importances: Optional[List[Dict[str, float]]] = None
