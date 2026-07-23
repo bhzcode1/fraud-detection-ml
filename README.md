@@ -205,6 +205,9 @@ curl -X POST http://127.0.0.1:8000/predict \
 ---
 
 ## Frontend (Streamlit)
+
+Live demo: https://fraud-detection-ml-iawikc9mzaapnu4gi8lkca.streamlit.app/
+
 The frontend provides a polished, interactive demo:
 
 - **Professional UI**: custom CSS, styled result cards, probability progress bar, and clear typography.
