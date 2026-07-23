@@ -249,6 +249,10 @@ Run as described in *Setup & Installation*.
 
 These insights align with domain intuition and validate that the model is learning meaningful patterns.
 
+## Handling Class Imbalance
+
+I compared two approaches to handling the severe class imbalance: class weighting and SMOTE oversampling. Class weights achieved a slightly higher PR-AUC (0.935 vs 0.924) and meaningfully fewer false positives (78 vs 159), at the cost of catching 22 fewer fraud cases out of 1,520. Given that false positives translate to blocked legitimate transactions and analyst investigation time, I'd lean toward class weights for this use case — though the choice ultimately depends on the specific cost of a missed fraud case versus a false alarm in a real deployment.
+
 ---
 
 ## Future Improvements
