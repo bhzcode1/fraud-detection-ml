@@ -39,8 +39,12 @@ class TransactionRequest(BaseModel):
             }
         }
 
+class FeatureImportance(BaseModel):
+    feature: str
+    importance: float
+
 class TransactionResponse(BaseModel):
     is_fraud: bool
     fraud_probability: float = Field(..., ge=0, le=1)
     risk_level: Literal["Low", "Medium", "High"]
-    feature_importances: Optional[List[Dict[str, float]]] = None
+    feature_importances: Optional[List[FeatureImportance]] = None

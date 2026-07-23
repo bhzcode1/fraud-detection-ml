@@ -1,0 +1,5 @@
+INFO:     127.0.0.1:51153 - "POST /predict HTTP/1.1" 422 Unprocessable Entity
+INFO:     127.0.0.1:51161 - "POST /predict HTTP/1.1" 422 Unprocessable Entity
+INFO:     127.0.0.1:51169 - "POST /predict HTTP/1.1" 422 Unprocessable Entity
+INFO:     127.0.0.1:51177 - "POST /predict HTTP/1.1" 422 Unprocessable Entity
+INFO:     127.0.0.1:51182 - "POST /predict HTTP/1.1" 422 Unprocessable Entity
